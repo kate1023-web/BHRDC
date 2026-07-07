@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일일 업무보고 자동화</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --paper: #F6F3EC;
+    --paper-card: #FCFAF5;
+    --ink: #22262B;
+    --ink-soft: #5B5F63;
+    --ink-faint: #93938C;
+    --rule: #DAD5C7;
+    --rule-strong: #C6C0AE;
+    --stamp: #B23A2E;
+    --stamp-soft: #F4E3DF;
+    --pine: #3E5C4E;
+    --pine-soft: #E4EBE4;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{ max-width: 1180px; margin: 0 auto; padding: 40px 28px 80px; }
+
+  .masthead{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+    margin-bottom: 30px;
+  }
+  .masthead h1{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size: 26px;
+    margin:0;
+    letter-spacing: -0.02em;
+  }
+  .masthead .sub{
+    font-size:12.5px;
+    color: var(--ink-soft);
+    margin-top:6px;
+  }
+  .masthead .date-badge{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color: var(--ink-soft);
+    text-align:right;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  @media (max-width: 860px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .panel-label{
+    font-size:11px;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    font-weight:500;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .panel-label::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background: var(--rule);
+  }
+
+  /* ---- FORM SIDE ---- */
+  .field{ margin-bottom: 16px; }
+  .field-row{ display:flex; gap:12px; }
+  .field-row .field{ flex:1; }
+  label{
+    display:block;
+    font-size:12.5px;
+    font-weight:500;
+    color: var(--ink-soft);
+    margin-bottom: 5px;
+  }
+  input[type=text], input[type=date], textarea, select{
+    width:100%;
+    background: var(--paper-card);
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 9px 11px;
+    font-family:'Noto Sans KR', sans-serif;
+    font-size: 13.5px;
+    color: var(--ink);
+    resize: vertical;
+    line-height:1.5;
+  }
+  input:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color: var(--ink);
+  }
+  textarea{ min-height: 64px; }
+  textarea.small{ min-height: 44px; }
+  ::placeholder{ color: var(--ink-faint); }
+
+  .section-block{
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 18px 18px 6px;
+    margin-bottom: 18px;
+  }
+  .section-block .block-title{
+    font-family:'Noto Serif KR', serif;
+    font-size:14.5px;
+    font-weight:700;
+    margin: 0 0 12px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+  .block-title .tag{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--pine);
+    display:inline-block;
+  }
+  .section-block.issue .tag{ background: var(--stamp); }
+
+  .priority-select{
+    display:flex; gap:6px; margin-top:4px;
+  }
+  .priority-select button{
+    flex:1;
+    padding:7px 0;
+    font-size:12px;
+    border:1px solid var(--rule-strong);
+    background: var(--paper-card);
+    border-radius:3px;
+    cursor:pointer;
+    color: var(--ink-soft);
+    font-family:'Noto Sans KR', sans-serif;
+  }
+  .priority-select button.active{
+    background: var(--ink);
+    color: var(--paper-card);
+    border-color: var(--ink);
+  }
+
+  .todo-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom: 8px;
+  }
+  .todo-row input[type=text]{
+    flex:1;
+  }
+  .todo-row .priority-select{
+    margin:0;
+    flex-shrink:0;
+    width: 132px;
+  }
+  .todo-row .priority-select button{
+    padding: 9px 0;
+  }
+  .todo-row .remove-btn{
+    flex-shrink:0;
+    width: 28px; height: 34px;
+    border:1px solid var(--rule-strong);
+    background: var(--paper-card);
+    border-radius:3px;
+    color: var(--ink-faint);
+    cursor:pointer;
+    font-size:16px;
+    line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .todo-row .remove-btn:hover{ border-color: var(--stamp); color: var(--stamp); }
+
+  .add-item-btn{
+    width:100%;
+    padding: 8px 0;
+    border: 1px dashed var(--rule-strong);
+    background: transparent;
+    border-radius:4px;
+    color: var(--ink-soft);
+    font-size:12.5px;
+    font-family:'Noto Sans KR', sans-serif;
+    cursor:pointer;
+    margin-top:2px;
+  }
+  .add-item-btn:hover{ border-color: var(--ink); color: var(--ink); }
+
+  .generate-btn{
+    width:100%;
+    margin-top: 6px;
+    padding: 13px 0;
+    background: var(--ink);
+    color: var(--paper-card);
+    border:none;
+    border-radius: 5px;
+    font-size: 14.5px;
+    font-weight:500;
+    font-family:'Noto Sans KR', sans-serif;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    letter-spacing: 0.01em;
+  }
+  .generate-btn:hover{ background:#000; }
+  .generate-btn:disabled{ background: var(--ink-faint); cursor:default; }
+  .generate-btn svg{ width:15px; height:15px; }
+
+  .hint{
+    font-size:11.5px;
+    color: var(--ink-faint);
+    margin-top: 10px;
+    line-height:1.6;
+  }
+
+  /* ---- REPORT SIDE ---- */
+  .report-frame{
+    position: sticky;
+    top: 20px;
+  }
+  .report-paper{
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    min-height: 560px;
+    padding: 34px 32px 30px;
+    position: relative;
+    box-shadow: 0 1px 0 var(--rule), 0 8px 0 -6px rgba(0,0,0,0.03);
+  }
+  .report-paper::before{
+    content:'';
+    position:absolute; left:0; top:0; bottom:0;
+    width:3px;
+    background: repeating-linear-gradient(180deg, var(--rule-strong) 0 6px, transparent 6px 12px);
+  }
+  .report-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+  .report-head h2{
+    font-family:'Noto Serif KR', serif;
+    font-size: 19px;
+    margin:0;
+  }
+  .report-meta{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-align:right;
+    line-height:1.6;
+  }
+
+  .stamp{
+    position:absolute;
+    top: 26px; right: 30px;
+    width: 62px; height:62px;
+    border: 2.5px solid var(--stamp);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--stamp);
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size: 13px;
+    transform: rotate(-12deg);
+    opacity:0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    letter-spacing: 0.05em;
+    background: var(--stamp-soft);
+  }
+  .stamp.show{ opacity:0.92; transform: rotate(-12deg) scale(1); }
+
+  .report-body{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    color: var(--ink);
+    min-height: 380px;
+  }
+  .report-body .placeholder{
+    font-family:'Noto Sans KR', sans-serif;
+    color: var(--ink-faint);
+    font-size: 13px;
+    line-height:1.9;
+  }
+
+  .report-actions{
+    display:flex; gap:8px; margin-top: 18px;
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+  }
+  .icon-btn{
+    flex:1;
+    padding: 9px 0;
+    border: 1px solid var(--rule-strong);
+    background: var(--paper-card);
+    border-radius: 4px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    cursor:pointer;
+    font-family:'Noto Sans KR', sans-serif;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .icon-btn:hover{ border-color: var(--ink); color: var(--ink); }
+
+  .status-line{
+    font-size:12px;
+    color: var(--ink-faint);
+    margin-top:10px;
+    min-height: 16px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .status-line.error{ color: var(--stamp); }
+
+  .loader{
+    display:inline-block; width:12px; height:12px;
+    border:2px solid rgba(255,255,255,0.35);
+    border-top-color: var(--paper-card);
+    border-radius:50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>일일 업무보고 자동화 워크시트</h1>
+      <div class="sub">항목을 입력하면 표준 양식에 맞춰 보고서를 자동 생성합니다</div>
+    </div>
+    <div class="date-badge" id="todayLabel"></div>
+  </div>
+
+  <div class="grid">
+
+    <!-- FORM SIDE -->
+    <div>
+      <div class="panel-label">기본 정보</div>
+      <div class="section-block">
+        <div class="field-row">
+          <div class="field">
+            <label for="author">작성자</label>
+            <input type="text" id="author" placeholder="홍길동">
+          </div>
+          <div class="field">
+            <label for="team">소속(팀)</label>
+            <input type="text" id="team" placeholder="개발팀">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="date">작성일자</label>
+            <input type="date" id="date">
+          </div>
+          <div class="field">
+            <label for="project">프로젝트명</label>
+            <input type="text" id="project" placeholder="회원 서비스 개편">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-label">업무 내용</div>
+
+      <div class="section-block">
+        <p class="block-title"><span class="tag"></span>오늘 한 일</p>
+        <div class="field">
+          <textarea id="today" placeholder="- 로그인 페이지 반응형 UI 구현 (100%)&#10;- API 연동 완료 (100%)&#10;- 버그 수정 3건"></textarea>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <p class="block-title"><span class="tag"></span>진행 중인 업무</p>
+        <div class="field">
+          <textarea class="small" id="progress" placeholder="- 회원가입 기능 개발 (완료 예정: 7/9)"></textarea>
+        </div>
+      </div>
+
+      <div class="section-block issue">
+        <p class="block-title"><span class="tag"></span>이슈 및 리스크</p>
+        <div class="field">
+          <textarea class="small" id="issue" placeholder="- API 응답 지연 (원인: 서버 부하) → 캐싱 적용 검토 중"></textarea>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <p class="block-title"><span class="tag"></span>내일 할 일</p>
+        <div id="tomorrowList"></div>
+        <button type="button" class="add-item-btn" id="addTomorrowBtn">+ 항목 추가</button>
+      </div>
+
+      <div class="section-block">
+        <p class="block-title"><span class="tag"></span>협업/공유 필요사항</p>
+        <div class="field">
+          <textarea class="small" id="collab" placeholder="없음"></textarea>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <p class="block-title"><span class="tag"></span>비고</p>
+        <div class="field">
+          <textarea class="small" id="note" placeholder="없음"></textarea>
+        </div>
+      </div>
+
+      <button class="generate-btn" id="genBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg>
+        보고서 생성
+      </button>
+      <div class="status-line" id="statusLine"></div>
+      <div class="hint">입력한 내용을 표준 양식(오늘 한 일 / 진행 중 / 이슈 및 리스크 / 내일 할 일 / 협업 / 비고)에 맞춰 불릿 형태로 자동 정리합니다. 인터넷 연결 없이 완전히 오프라인으로 작동합니다.</div>
+    </div>
+
+    <!-- REPORT SIDE -->
+    <div class="report-frame">
+      <div class="panel-label">미리보기</div>
+      <div class="report-paper">
+        <div class="stamp" id="stamp">승인<br>완료</div>
+        <div class="report-head">
+          <h2>일일 업무보고</h2>
+          <div class="report-meta" id="metaBox">작성자: —<br>소속: —<br>일자: —</div>
+        </div>
+        <div class="report-body" id="reportBody"><span class="placeholder">왼쪽에 오늘의 업무 내용을 입력하고 &lsquo;보고서 생성&rsquo;을 누르면<br>이곳에 표준 양식 보고서가 작성됩니다.</span></div>
+        <div class="report-actions">
+          <button class="icon-btn" id="copyBtn">복사하기</button>
+          <button class="icon-btn" id="downloadBtn">텍스트 파일로 저장</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const todayLabel = document.getElementById('todayLabel');
+  const now = new Date();
+  todayLabel.textContent = now.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
+  document.getElementById('date').valueAsDate = now;
+
+  // 내일 할 일 - 여러 항목 관리
+  let todoIdSeq = 0;
+  let todoItems = [];
+  const tomorrowList = document.getElementById('tomorrowList');
+
+  function addTodoItem(text = '', priority = '상'){
+    const id = ++todoIdSeq;
+    todoItems.push({ id, text, priority });
+    renderTodoItems();
+  }
+
+  function removeTodoItem(id){
+    todoItems = todoItems.filter(item => item.id !== id);
+    if(todoItems.length === 0){ addTodoItem(); return; }
+    renderTodoItems();
+  }
+
+  function renderTodoItems(){
+    tomorrowList.innerHTML = '';
+    todoItems.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'todo-row';
+      row.dataset.id = item.id;
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = '예: 회원가입 유효성 검사 구현';
+      input.value = item.text;
+      input.addEventListener('input', () => { item.text = input.value; });
+
+      const prioWrap = document.createElement('div');
+      prioWrap.className = 'priority-select';
+      ['상','중','하'].forEach(p => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = p;
+        if(p === item.priority) b.classList.add('active');
+        b.addEventListener('click', () => {
+          item.priority = p;
+          prioWrap.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+        });
+        prioWrap.appendChild(b);
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-btn';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.addEventListener('click', () => removeTodoItem(item.id));
+
+      row.appendChild(input);
+      row.appendChild(prioWrap);
+      row.appendChild(removeBtn);
+      tomorrowList.appendChild(row);
+    });
+  }
+
+  document.getElementById('addTomorrowBtn').addEventListener('click', () => addTodoItem());
+
+  // 초기 항목 2개로 시작
+  addTodoItem('', '상');
+  addTodoItem('', '중');
+
+  const genBtn = document.getElementById('genBtn');
+  const statusLine = document.getElementById('statusLine');
+  const reportBody = document.getElementById('reportBody');
+  const metaBox = document.getElementById('metaBox');
+  const stamp = document.getElementById('stamp');
+
+  function val(id){ return document.getElementById(id).value.trim(); }
+
+  let lastReportText = '';
+
+  function toBullets(rawText){
+    const lines = rawText.split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+      .map(l => l.replace(/^[-•·]\s*/, ''));
+    if(lines.length === 0) return '- 없음';
+    return lines.map(l => `- ${l}`).join('\n');
+  }
+
+  function buildReport({ today, progress, issue, todos, collab, note }){
+    const priorityOrder = { '상': 0, '중': 1, '하': 2 };
+    const sortedTodos = [...todos].sort((a,b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    const todoLines = sortedTodos.length
+      ? sortedTodos.map(t => `- [${t.priority}] ${t.text}`).join('\n')
+      : '- 없음';
+
+    return [
+      '■ 오늘 한 일',
+      toBullets(today),
+      '',
+      '■ 진행 중',
+      toBullets(progress),
+      '',
+      '■ 이슈 및 리스크',
+      toBullets(issue),
+      '',
+      '■ 내일 할 일',
+      todoLines,
+      '',
+      '■ 협업·공유 필요사항',
+      toBullets(collab),
+      '',
+      '■ 비고',
+      toBullets(note)
+    ].join('\n');
+  }
+
+  function generateReport(){
+    const author = val('author') || '미입력';
+    const team = val('team') || '미입력';
+    const date = val('date') || '';
+    const project = val('project') || '미입력';
+    const today = val('today');
+    const progress = val('progress');
+    const issue = val('issue');
+    const filledTodos = todoItems.filter(item => item.text.trim().length > 0)
+      .map(item => ({ priority: item.priority, text: item.text.trim() }));
+    const collab = val('collab');
+    const note = val('note');
+
+    metaBox.innerHTML = `작성자: ${author}<br>소속: ${team}<br>일자: ${date}`;
+    stamp.classList.remove('show');
+
+    genBtn.disabled = true;
+    genBtn.innerHTML = '<span class="loader"></span> 정리 중...';
+    statusLine.classList.remove('error');
+    statusLine.textContent = '입력 내용을 표준 양식으로 정리하고 있습니다...';
+    reportBody.innerHTML = '<span class="placeholder">작성 중입니다...</span>';
+
+    setTimeout(() => {
+      const text = buildReport({ today, progress, issue, todos: filledTodos, collab, note });
+      lastReportText = `일일 업무보고\n작성자: ${author}   소속: ${team}   일자: ${date}   프로젝트: ${project}\n\n${text}`;
+      reportBody.textContent = text;
+      stamp.classList.add('show');
+      statusLine.textContent = '보고서가 생성되었습니다.';
+      genBtn.disabled = false;
+      genBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg> 보고서 생성';
+    }, 250);
+  }
+
+  genBtn.addEventListener('click', generateReport);
+
+  document.getElementById('copyBtn').addEventListener('click', async ()=>{
+    if(!lastReportText){ return; }
+    try{
+      await navigator.clipboard.writeText(lastReportText);
+      statusLine.classList.remove('error');
+      statusLine.textContent = '클립보드에 복사되었습니다.';
+    }catch(e){
+      statusLine.classList.add('error');
+      statusLine.textContent = '복사에 실패했습니다.';
+    }
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', ()=>{
+    if(!lastReportText){ return; }
+    const blob = new Blob([lastReportText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = val('date') || 'report';
+    a.href = url;
+    a.download = `일일업무보고_${d}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+</script>
+</body>
+</html>
